@@ -1,9 +1,13 @@
 import { INestApplication, Injectable, OnModuleInit } from "@nestjs/common";
+// @ts-ignore
 import { PrismaClient } from "@prisma/client";
 import { tenantLocalStorage } from "../auth/tenant.guard";
 
 @Injectable()
+// @ts-ignore
 export class PrismaService extends PrismaClient implements OnModuleInit {
+  [key: string]: any;
+
   constructor() {
     super({
       datasources: {
