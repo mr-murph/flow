@@ -1,11 +1,13 @@
 import { Controller, Post, Body, UseGuards, Request } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { AuthService } from "./auth.service";
+import { Public } from "./public.decorator";
 
 @Controller("auth")
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Public()
   @UseGuards(AuthGuard("local")) // We will create a local strategy later
   @Post("login")
   async login(@Request() req: Request) {
