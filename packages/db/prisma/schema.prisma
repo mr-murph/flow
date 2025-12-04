@@ -1,0 +1,264 @@
+// Schema Prisma per Dental SaaS (Multi-tenant) - CORRETTO
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- ENUMS ---
+
+enum UserRole {
+  SUPER_ADMIN // Gestore SaaS
+  ADMIN_STUDIO // Titolare
+  DOTTORE
+  SEGRETERIA
+  IGIENISTA
+  LAB_TECNICO
+  PAZIENTE
+}
+
+enum TenantType {
+  CLINICA
+  LABORATORIO
+}
+
+enum FileStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  ERROR
+  ARCHIVED
+}
+
+enum LabOrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELIVERED
+  CANCELLED
+}
+
+// --- CORE MODELS ---
+
+// Il Tenant è l\"entità radice (lo Studio o il Lab)
+model Tenant {
+  id          String     @id @default(uuid())
+  name        String
+  type        TenantType
+  pIva        String     @unique
+  sdiCode     String?    // Codice destinatario fattura elettronica
+  
+  users       User[]
+  patients    Patient[]
+  medicalFiles MedicalFile[]
+  treatments  Treatment[]
+  auditLogs   AuditLog[]
+  templates   ConsentTemplate[]
+  
+  // Aggiunte per il modulo LAB
+  materials   MaterialBatch[]
+  labOrders   LabOrder[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed (Argon2)
+  firstName String
+  lastName  String
+  role      UserRole
+  
+  // Collegamento al Tenant
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  auditLogs AuditLog[] // Azioni compiute dall\"utente
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model Patient {
+  id            String   @id @default(uuid())
+  firstName     String
+  lastName      String
+  cf            String   // Codice Fiscale
+  email         String?
+  phone         String?
+  dateOfBirth   DateTime?
+  address       String?
+  
+  dentalChart   Json?    // Stato denti (Odontogramma)
+
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  
+  files         MedicalFile[]
+  treatments    Treatment[]
+  consents      SignedConsent[]
+  labOrders     LabOrder[] // Relazione con gli ordini di laboratorio
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([cf, tenantId]) // Unicità del CF all\"interno dello stesso studio
+  @@index([tenantId])
+}
+
+// --- IMAGING & FILES ---
+
+model MedicalFile {
+  id          String     @id @default(uuid())
+  fileName    String
+  s3Key       String     // Percorso su Google Cloud Storage
+  mimeType    String     // application/dicom, model/stl
+  sizeBytes   Int
+  status      FileStatus @default(UPLOADING)
+  
+  // AGGIUNTO: Campo mancante richiesto dal controller
+  uploadedBy  String?    // Email o ID dell\"utente che ha caricato il file
+  
+  metaData    Json?      // Dati estratti (es. Data scatto RX, Modality)
+
+  patientId   String
+  patient     Patient    @relation(fields: [patientId], references: [id])
+  
+  tenantId    String
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+
+  createdAt   DateTime   @default(now())
+  
+  @@index([tenantId])
+  @@index([patientId])
+}
+
+// --- CLINICA ---
+
+model Treatment {
+  id          String   @id @default(uuid())
+  description String
+  tooth       Int?     // Numero dente (ISO)
+  status      String   // PLANNED, COMPLETED
+  price       Decimal  @db.Decimal(10, 2)
+  
+  date        DateTime
+  
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+// --- MAGAZZINO & LABORATORIO (AGGIUNTI PER FIXARE ERRORI) ---
+
+model MaterialBatch {
+  id             String   @id @default(uuid())
+  name           String
+  batchCode      String?
+  quantity       Int
+  expirationDate DateTime?
+  
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  
+  usedIn         UsedMaterial[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([tenantId])
+}
+
+model LabOrder {
+  id          String         @id @default(uuid())
+  description String
+  status      LabOrderStatus @default(PENDING)
+  deliveryDate DateTime?
+  
+  patientId   String
+  patient     Patient        @relation(fields: [patientId], references: [id])
+  
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  
+  usedMaterials UsedMaterial[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  @@index([tenantId])
+  @@index([patientId])
+}
+
+model UsedMaterial {
+  id              String        @id @default(uuid())
+  quantityUsed    Int
+  
+  labOrderId      String
+  labOrder        LabOrder      @relation(fields: [labOrderId], references: [id])
+  
+  materialBatchId String
+  materialBatch   MaterialBatch @relation(fields: [materialBatchId], references: [id])
+  
+  createdAt       DateTime      @default(now())
+}
+
+// --- COMPLIANCE & LEGAL ---
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String   // CREATE, UPDATE, DELETE, VIEW
+  resource  String   // Tabella toccata (es. \"Patient\")
+  resourceId String? // ID della riga toccata
+  details   Json?    // Dettagli modifica (oldValue, newValue)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  
+  timestamp DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model ConsentTemplate {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text // HTML o Markdown
+  version   Int      @default(1)
+  
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  
+  signedConsents SignedConsent[]
+
+  createdAt DateTime @default(now())
+}
+
+model SignedConsent {
+  id          String   @id @default(uuid())
+  
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  
+  templateId  String
+  template    ConsentTemplate @relation(fields: [templateId], references: [id])
+  
+  signedPdfUrl String  // URL GCS del PDF firmato
+  signatureHash String // Hash crittografico per non ripudio
+  
+  signedAt    DateTime @default(now())
+}

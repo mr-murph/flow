@@ -1,0 +1,68 @@
+# Setup Base Infrastruttura Google Cloud (IaC)
+# Eseguire con: terraform init && terraform apply
+
+provider "google" {
+  project = "dental-saas-production"
+  region  = "europe-west8" # Milano
+}
+
+# 1. Database (Cloud SQL Postgres)
+resource "google_sql_database_instance" "main" {
+  name             = "dental-db-primary"
+  database_version = "POSTGRES_15"
+  region           = "europe-west8"
+  deletion_protection = true
+
+  settings {
+    tier = "db-custom-2-7680" # 2 vCPU, 7.5 GB RAM
+    backup_configuration {
+      enabled = true
+      start_time = "02:00"
+    }
+    ip_configuration {
+      ipv4_enabled = true
+      require_ssl  = true
+    }
+  }
+}
+
+# 2. Storage Bucket (Files Medici & Template)
+resource "google_storage_bucket" "medical_files" {
+  name          = "dental-saas-files-prod-milan"
+  location      = "europe-west8"
+  storage_class = "STANDARD"
+  uniform_bucket_level_access = true
+
+  cors {
+    origin          = ["https://app.dentalsaas.it"]
+    method          = ["PUT", "GET", "HEAD"]
+    response_header = ["*"]
+    max_age_seconds = 3600
+  }
+}
+
+# 3. Artifact Registry (Docker Images)
+resource "google_artifact_registry_repository" "repo" {
+  location      = "europe-west8"
+  repository_id = "dental-containers"
+  description   = "Docker repo for NextJS/NestJS"
+  format        = "DOCKER"
+}
+
+# 4. IAM Service Account
+resource "google_service_account" "backend_sa" {
+  account_id   = "backend-service-account"
+  display_name = "NestJS Backend Identity"
+}
+
+resource "google_project_iam_binding" "backend_storage" {
+  project = "dental-saas-production"
+  role    = "roles/storage.objectAdmin"
+  members = ["serviceAccount:${google_service_account.backend_sa.email}"]
+}
+
+resource "google_project_iam_binding" "backend_sql" {
+  project = "dental-saas-production"
+  role    = "roles/cloudsql.client"
+  members = ["serviceAccount:${google_service_account.backend_sa.email}"]
+}

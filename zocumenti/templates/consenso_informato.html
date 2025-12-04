@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Consenso Informato Odontoiatrico</title>
+    <style>
+        body { font-family: 'Helvetica', sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .patient-info { background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .content { margin: 20px 0; }
+        .signature-section { margin-top: 50px; display: flex; justify-content: space-between; }
+        .signature-box { border-top: 1px solid #000; width: 45%; padding-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Modulo di Consenso Informato</h1>
+    
+    <div class="patient-info">
+        <p><strong>Paziente:</strong> {{PAZIENTE}}</p>
+        <p><strong>Codice Fiscale:</strong> {{CF}}</p>
+        <p><strong>Data:</strong> {{DATA}}</p>
+    </div>
+
+    <div class="content">
+        <p>Io sottoscritto/a dichiaro di essere stato/a informato/a in modo chiaro e comprensibile dal Dott. {{DOTTORE}} riguardo a:</p>
+        <ul>
+            <li>La diagnosi e la prognosi della mia condizione clinica.</li>
+            <li>Le alternative terapeutiche disponibili.</li>
+            <li>I benefici attesi e i potenziali rischi/complicanze del trattamento proposto.</li>
+        </ul>
+        <p>Accetto liberamente e consapevolmente di sottopormi alle cure odontoiatriche concordate.</p>
+    </div>
+
+    <div class="signature-section">
+        <div class="signature-box">Firma del Paziente</div>
+        <div class="signature-box">Firma del Medico</div>
+    </div>
+</body>
+</html>

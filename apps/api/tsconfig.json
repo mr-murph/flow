@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@repo/dto": ["../../packages/dto/src"],
+      "@repo/db": ["../../packages/db/client"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/types/express-request.interface.ts"]
+}

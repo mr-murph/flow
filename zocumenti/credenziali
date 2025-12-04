@@ -1,0 +1,32 @@
+1. Identità Cloud & Progetto
+* Project Name: dental-flow
+* Project ID: gen-lang-client-0226862932
+* Project Number: 413491605036
+* Billing Account ID: 014650-297090-FFD65F
+
+2. Infrastruttura (Terraform Variables)
+* Region: europe-west8 - Milano
+* Dataset Location: La regione del dataset Healthcare (es. us-central1 per la trial, europe-west8 per produzione reale).
+* Bucket Name Suffix: 0226862932
+* Database Instance Name: dental-db-primary
+* Repository Name: Il nome del registro Docker (es. dental-containers).
+
+3. Segreti (Secret Manager)
+* JWT_SECRET: La stringa segreta usata per firmare i token di login (es. una stringa random lunga 64 caratteri).
+* DATABASE_URL: La stringa di connessione completa al database Cloud SQL.
+    * Formato: postgresql://[postgre]:[admin]@[IP_PRIVATO]:5432/[dental-db-primary]?schema=public&sslmode=require
+* DB_PASSWORD: admin
+
+4. Domini & DNS
+* Dominio Principale: dentalmitaca.com
+* Sottodominio App: L'indirizzo pubblico del frontend (es. app.tuodominio.it).
+* Sottodominio API: L'indirizzo pubblico del backend (es. api.tuodominio.it).
+* DNS Provider: Cloudflare
+
+5. Configurazione Software (Environment Variables)
+* NEXT_PUBLIC_API_URL: L'URL pubblico del backend che il frontend deve chiamare (es. https://api.tuodominio.it o l'URL .run.app generato da Google).
+* NODE_ENV: L'ambiente di esecuzione (production o development).
+
+6. Contatti & Ruoli
+* Owner Email: lat.carmine@gmail.com).
+* Service Account Email: L'email dell'identità del backend creata da Terraform (es. backend-service-account@gen-lang-client-0226862932.iam.gserviceaccount.com).

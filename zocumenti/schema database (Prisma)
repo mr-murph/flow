@@ -1,0 +1,126 @@
+// SCHEMA DATABASE (PostgreSQL + RLS)
+// Include supporto per Consensi e Template
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN_STUDIO
+  DOTTORE
+  SEGRETERIA
+  LAB_TECNICO
+  PAZIENTE
+}
+
+enum TenantType {
+  CLINICA
+  LABORATORIO
+}
+
+// --- CORE ---
+
+model Tenant {
+  id          String     @id @default(uuid())
+  name        String
+  type        TenantType
+  pIva        String     @unique
+  
+  users       User[]
+  patients    Patient[]
+  templates   ConsentTemplate[] // Template personalizzati per studio
+  
+  createdAt   DateTime   @default(now())
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      UserRole
+  
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  
+  auditLogs AuditLog[]
+}
+
+model Patient {
+  id          String   @id @default(uuid())
+  firstName   String
+  lastName    String
+  cf          String   
+  
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  
+  files       MedicalFile[]
+  consents    SignedConsent[]
+  treatments  Treatment[]
+}
+
+// --- GESTIONE DOCUMENTALE ---
+
+model ConsentTemplate {
+  id        String   @id @default(uuid())
+  title     String   // Es. "Consenso Implantologia"
+  content   String   // HTML o Markdown (dal Drive importato)
+  version   Int      @default(1)
+  
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  
+  signedConsents SignedConsent[]
+}
+
+model SignedConsent {
+  id          String   @id @default(uuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  
+  templateId  String
+  template    ConsentTemplate @relation(fields: [templateId], references: [id])
+  
+  signedPdfUrl String  // URL su GCS del PDF firmato
+  signedAt     DateTime @default(now())
+  signatureHash String // Hash per integrità legale
+}
+
+model MedicalFile {
+  id          String   @id @default(uuid())
+  fileName    String
+  s3Key       String
+  mimeType    String
+  sizeBytes   Int
+  
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+}
+
+model Treatment {
+  id          String   @id @default(uuid())
+  description String
+  tooth       Int?
+  status      String
+  
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+}
+
+// --- AUDIT ---
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  details   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  timestamp DateTime @default(now())
+}

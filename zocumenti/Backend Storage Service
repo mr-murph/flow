@@ -1,0 +1,62 @@
+// Servizio per generare URL di Upload/Download sicuri (GCS)
+import { Injectable, Logger } from '@nestjs/common';
+import { Storage } from '@google-cloud/storage';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class GcpStorageService {
+  private storage: Storage;
+  private bucketName: string;
+  private readonly logger = new Logger(GcpStorageService.name);
+
+  constructor(private configService: ConfigService) {
+    this.storage = new Storage(); // Auth automatica su Cloud Run
+    this.bucketName = this.configService.get<string>('dental-files-0226862932');
+  }
+
+  // Genera URL per upload diretto dal browser (o dal Satellite)
+  async generateUploadUrl(
+    fileName: string, 
+    contentType: string, 
+    tenantId: string
+  ): Promise<{ uploadUrl: string; fileKey: string }> {
+    
+    const uniqueId = crypto.randomUUID();
+    const date = new Date();
+    // Path: tenant_id/YYYY/UUID_filename
+    const path = `${tenantId}/${date.getFullYear()}/${uniqueId}_${fileName}`;
+    
+    const options = {
+      version: 'v4' as const,
+      action: 'write' as const,
+      expires: Date.now() + 15 * 60 * 1000, // 15 min
+      contentType: contentType,
+    };
+
+    try {
+      const [url] = await this.storage
+        .bucket(this.bucketName)
+        .file(path)
+        .getSignedUrl(options);
+
+      return { uploadUrl: url, fileKey: path };
+    } catch (error) {
+      this.logger.error('Error signing URL', error);
+      throw new Error('Storage config error');
+    }
+  }
+
+  // Genera URL di lettura temporaneo
+  async generateReadUrl(fileKey: string): Promise<string> {
+    const options = {
+      version: 'v4' as const,
+      action: 'read' as const,
+      expires: Date.now() + 60 * 60 * 1000, // 1 ora
+    };
+    const [url] = await this.storage
+      .bucket(this.bucketName)
+      .file(fileKey)
+      .getSignedUrl(options);
+    return url;
+  }
+}
