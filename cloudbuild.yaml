@@ -12,7 +12,7 @@ steps:
   # Build Frontend
   - id: "build-frontend"
     name: "gcr.io/cloud-builders/docker"
-    args: ["build", "-t", "europe-west8-docker.pkg.dev/$PROJECT_ID/dental-containers/frontend:$COMMIT_SHA", ".", "-f", "Dockerfile", "--target", "frontend-runner"]
+    args: ["build", "--build-arg", "NEXT_PUBLIC_API_URL=https://dental-saas-backend-413491605036.europe-west8.run.app", "-t", "europe-west8-docker.pkg.dev/$PROJECT_ID/dental-containers/frontend:$COMMIT_SHA", ".", "-f", "Dockerfile", "--target", "frontend-runner"]
 
   # Push Frontend
   - id: "push-frontend"
@@ -30,7 +30,7 @@ steps:
   - id: "deploy-frontend"
     name: "gcr.io/cloud-builders/gcloud"
     entrypoint: gcloud
-    args: ["run", "deploy", "dental-saas-frontend", "--image", "europe-west8-docker.pkg.dev/$PROJECT_ID/dental-containers/frontend:$COMMIT_SHA", "--region", "europe-west8", "--platform", "managed", "--allow-unauthenticated", "--set-env-vars=NEXT_PUBLIC_API_URL=https://dental-saas-backend-run-url"]
+    args: ["run", "deploy", "dental-saas-frontend", "--image", "europe-west8-docker.pkg.dev/$PROJECT_ID/dental-containers/frontend:$COMMIT_SHA", "--region", "europe-west8", "--platform", "managed", "--allow-unauthenticated", "--set-env-vars=NEXT_PUBLIC_API_URL=https://dental-saas-backend-413491605036.europe-west8.run.app"]
 
 availableSecrets:
   secretManager:
