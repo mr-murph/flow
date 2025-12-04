@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { UploadDropzone } from "../../../../../components/upload-dropzone";
 import { FileIcon, Eye, Loader2 } from "lucide-react";
 import { useMedicalFiles, MedicalFile } from "../../../../../hooks/use-medical-files"; 
 import { Button } from "../../../../../components/ui/button";
 import { DicomViewer } from "../../../../../components/dicom-viewer";
 
-export default function PatientFilesPage({ params }: { params: { id: string } }) {
-  const { data: files, refetch, isLoading } = useMedicalFiles(params.id);
+export default function PatientFilesPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const { data: files, refetch, isLoading } = useMedicalFiles(id);
   const [viewingUrl, setViewingUrl] = useState<string | null>(null);
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
 
@@ -42,7 +45,7 @@ export default function PatientFilesPage({ params }: { params: { id: string } })
       </div>
 
       {/* Area Upload */}
-      <UploadDropzone patientId={params.id} onUploadComplete={() => refetch()} />
+      <UploadDropzone patientId={id} onUploadComplete={() => refetch()} />
 
       {/* Lista File */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">

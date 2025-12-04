@@ -4,7 +4,7 @@ import Link from "next/link";
 
 interface PatientDetailLayoutProps {
   children: React.ReactNode;
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Placeholder for fetching patient details
@@ -24,16 +24,17 @@ async function getPatientDetails(id: string) {
 }
 
 export default async function PatientDetailLayout({ children, params }: PatientDetailLayoutProps) {
-  const patient = await getPatientDetails(params.id);
+  const { id } = await params;
+  const patient = await getPatientDetails(id);
 
   if (!patient) {
     notFound();
   }
 
   const tabs = [
-    { name: "Anagrafica", href: `/patients/${params.id}` },
-    { name: "Piano di Cura", href: `/patients/${params.id}/treatment-plan` },
-    { name: "Files", href: `/patients/${params.id}/files` },
+    { name: "Anagrafica", href: `/patients/${id}` },
+    { name: "Piano di Cura", href: `/patients/${id}/treatment-plan` },
+    { name: "Files", href: `/patients/${id}/files` },
   ];
 
   return (
