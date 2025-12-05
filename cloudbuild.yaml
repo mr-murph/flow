@@ -23,7 +23,7 @@ steps:
   - id: "deploy-backend"
     name: "gcr.io/cloud-builders/gcloud"
     entrypoint: gcloud
-    args: ["run", "deploy", "dental-saas-backend", "--image", "europe-west8-docker.pkg.dev/$PROJECT_ID/dental-containers/backend:$COMMIT_SHA", "--region", "europe-west8", "--platform", "managed", "--allow-unauthenticated", "--set-env-vars=DATABASE_URL=$$DATABASE_URL,JWT_SECRET=$$JWT_SECRET,GCP_BUCKET_NAME=$$GCP_BUCKET_NAME,GCP_PROJECT_ID=$$GCP_PROJECT_ID"]
+    args: ["run", "deploy", "dental-saas-backend", "--image", "europe-west8-docker.pkg.dev/$PROJECT_ID/dental-containers/backend:$COMMIT_SHA", "--region", "europe-west8", "--platform", "managed", "--allow-unauthenticated", "--add-cloudsql-instances=gen-lang-client-0226862932:europe-west8:dental-db-primary", "--set-env-vars=DATABASE_URL=$$DATABASE_URL,JWT_SECRET=$$JWT_SECRET,GCP_BUCKET_NAME=$$GCP_BUCKET_NAME,GCP_PROJECT_ID=$$GCP_PROJECT_ID"]
     secretEnv: ["DATABASE_URL", "JWT_SECRET", "GCP_BUCKET_NAME", "GCP_PROJECT_ID"]
 
   # Deploy Frontend
