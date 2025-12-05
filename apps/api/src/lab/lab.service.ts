@@ -11,9 +11,10 @@ export class LabService {
     return this.prisma.materialBatch.create({
       data: {
         name: dto.name,
-        manufacturer: dto.manufacturer,
-        batchNumber: dto.batchNumber,
-        expiryDate: new Date(dto.expiryDate),
+        // manufacturer: dto.manufacturer, // Removed: Not in schema
+        batchCode: dto.batchNumber, // Mapped to batchCode
+        quantity: dto.quantity || 0, // Added: required by schema
+        expirationDate: new Date(dto.expiryDate), // Mapped to expirationDate
         tenant: { connect: { id: this.prisma.getTenantId() } }
       }
     });
@@ -22,7 +23,7 @@ export class LabService {
   async getBatches() {
     return this.prisma.materialBatch.findMany({
       where: { tenantId: this.prisma.getTenantId() },
-      orderBy: { expiryDate: "asc" }
+      orderBy: { expirationDate: "asc" }
     });
   }
 
@@ -31,8 +32,8 @@ export class LabService {
   async createOrder(dto: any) {
     return this.prisma.labOrder.create({
       data: {
-        status: "NEW",
-        prescription: dto.prescription,
+        status: "PENDING",
+        description: dto.prescription, // Mapped to description
         deliveryDate: new Date(dto.deliveryDate),
         patient: { connect: { id: dto.patientId } },
         tenant: { connect: { id: this.prisma.getTenantId() } },

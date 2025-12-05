@@ -11,3 +11,18 @@ services:
     image: minio/minio
     ports: ["9000:9000", "9001:9001"]
     command: server /data --console-address ":9001"
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-runner
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/dental_saas?schema=public
+      - JWT_SECRET=local-secret
+      - GCP_BUCKET_NAME=dental-files-local
+      - GCP_PROJECT_ID=local-project
+      - PORT=3001
+    depends_on:
+      - postgres

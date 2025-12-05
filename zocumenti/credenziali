@@ -14,7 +14,7 @@
 3. Segreti (Secret Manager)
 * JWT_SECRET: La stringa segreta usata per firmare i token di login (es. una stringa random lunga 64 caratteri).
 * DATABASE_URL: https://console.cloud.google.com/storage/browser/dental-files-0226862932
-    * Formato: postgresql://[postgre]:[admin]@[IP_PRIVATO]:5432/[dental-db-primary]?schema=public&sslmode=require
+    * Formato: postgresql://postgre:admin@projects/gen-lang-client-0226862932/global/networks/default:5432/dental-db-primary?schema=public&sslmode=require
 * DB_PASSWORD: admin
 
 4. Domini & DNS
