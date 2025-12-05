@@ -9,6 +9,6 @@ async function bootstrap() {
   // Globally apply the TenantGuard
   app.useGlobalGuards(new TenantGuard(app.get(JwtService), app.get(Reflector)));
 
-  await app.listen(process.env.PORT || 3001);
+  await app.listen(process.env.PORT || 3001, '0.0.0.0');
 }
 bootstrap();
